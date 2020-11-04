@@ -100,14 +100,18 @@ export function handleLent(event: Lent): void {
   if (!lender) {
     lender = createUser(lenderAddress);
   }
-  lender.lending.push(nftId);
+  const newLending = lender.lending;
+  newLending.push(nftId);
+  lender.lending = newLending;
   // * --------------------------------------------------------
 
   // ! -------------------------------------------------------
   // ! production: remove the faces
   if (!lender.faces.includes(nftId)) {
     // ! FACE MUST EXIST. IF IT DOESN'T, IT WILL NOT HAVE A URI
-    lender.faces.push(faceId);
+    const newFaces = lender.faces;
+    newFaces.push(faceId);
+    lender.faces = newFaces;
   }
   nft.face = faceId;
   // ! -------------------------------------------------------
@@ -136,7 +140,9 @@ export function handleBorrowed(event: Borrowed): void {
   if (!borrower) {
     borrower = createUser(borrowerAddr);
   }
-  borrower.borrowing.push(nftId);
+  const newBorrowing = borrower.borrowing;
+  newBorrowing.push(nftId);
+  borrower.borrowing = newBorrowing;
 
   nft.save();
   borrower.save();
@@ -199,7 +205,9 @@ export function handleNewFace(event: NewFace): void {
   if (!user) {
     user = createUser(nftOwner);
   }
-  user.faces.push(faceId);
+  const newFaces = user.faces;
+  newFaces.push(faceId);
+  user.faces = newFaces;
 
   face.save();
   user.save();
@@ -231,9 +239,11 @@ export function handleApprovalOne(event: ApprovalEvent): void {
   if (!user) {
     user = createUser(nftOwnerHex);
   }
+  const newApprovals = user.approvals;
+  newApprovals.push(approvalId);
+  user.approvals = newApprovals;
 
   approval.save();
-  user.approvals.push(approvalId);
   user.save();
 }
 
@@ -256,8 +266,10 @@ export function handleApprovalAll(event: ApprovalForAll): void {
   if (user == null) {
     user = createUser(nftOwnerHex);
   }
+  const newApprovedAlls = user.approvedAll;
+  newApprovedAlls.push(approveAllId);
+  user.approvedAll = newApprovedAlls;
 
   approvedAll.save();
-  user.approvedAll.push(approveAllId);
   user.save();
 }
