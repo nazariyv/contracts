@@ -33,6 +33,7 @@ const resetBorrowedNft = (nft: Nft): Nft => {
 // ! notes for self
 // 1. string templating does not work
 // 2. variables from function scope not visible inside of .filter
+// 3. pushing directly into arrays won't work. Need to make a copy and then assign a copy to prop
 
 const getFaceId = (nftAddr: string, tokenId: string): string =>
   nftAddr + "::" + tokenId;
