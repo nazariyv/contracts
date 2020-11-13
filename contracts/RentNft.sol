@@ -52,7 +52,8 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
   }
 
   mapping(address => mapping(uint256 => Nft)) public nfts;
-  mapping(address => address[]) public lenderCashflows;
+  // todo: the latter does not get updates. time pressures
+  mapping(address => address[]) private lenderCashflows;
 
   RentNftAddressProvider public resolver;
 
@@ -204,6 +205,14 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
     nft.borrower = address(0);
     nft.actualDuration = 0;
     nft.borrowedAt = 0;
+  }
+
+  function getNumCashflows(address nft) public view returns (uint256) {
+    return lenderCashflows[nft].length;
+  }
+
+  function getLastCashflow(address nft) external view returns (address) {
+    return lenderCashflows[nft][lenderCashflows[nft].length - 1];
   }
 }
 
