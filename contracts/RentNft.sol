@@ -95,7 +95,7 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
     // transfer nft to this contract. will fail if nft wasn't approved
     // this transfers the GanFace but not the TradeableCashflow
     ERC721(_nftAddress).safeTransferFrom(msg.sender, address(this), _tokenId);
-    lenderCashflows[msg.sender].push(_cashflowAddress);
+    lenderCashflows[_nftAddress].push(_cashflowAddress);
 
     emit Lent(
       _nftAddress,
