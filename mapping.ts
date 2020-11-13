@@ -1,33 +1,14 @@
-import {BigInt} from "@graphprotocol/graph-ts";
-import {Lent, Borrowed, Returned} from "./generated/RentNft/RentNft";
-import {
-  NewFace,
-  Approval as ApprovalEvent,
-  ApprovalForAll
-} from "./generated/GanFaceNft/GanFaceNft";
-import {
-  Face,
-  Nft,
-  User,
-  Approval as ApprovalSchema,
-  ApprovedAll
-} from "./generated/schema";
+import { BigInt } from "@graphprotocol/graph-ts";
+import { Lent, Borrowed, Returned } from "./generated/RentNft/RentNft";
+import { NewFace } from "./generated/GanFaceFactory/GanFaceFactory";
+import { Face, Nft, User } from "./generated/schema";
 
 let createUser = (id: string): User => {
   let user = new User(id);
   user.lending = new Array<string>();
   user.borrowing = new Array<string>();
   user.faces = new Array<string>();
-  user.approvals = new Array<string>();
-  user.approvedAll = new Array<string>();
   return user;
-};
-
-let resetBorrowedNft = (nft: Nft): Nft => {
-  nft.borrower = null;
-  nft.actualDuration = BigInt.fromI32(0);
-  nft.borrowedAt = BigInt.fromI32(0);
-  return nft;
 };
 
 // ! notes for self
@@ -39,17 +20,6 @@ let getFaceId = (nftAddr: string, tokenId: string): string =>
   nftAddr + "::" + tokenId;
 let getNftId = (faceId: string, lender: string): string =>
   faceId + "::" + lender;
-let getApprovedOneId = (
-  nftAddress: string,
-  owner: string,
-  approved: string,
-  tokenId: string
-): string => nftAddress + "::" + tokenId + "::" + owner + "::" + approved;
-let getApprovedAllId = (
-  nftAddress: string,
-  owner: string,
-  approved: string
-): string => nftAddress + "::" + owner + "::" + approved;
 
 export function handleLent(event: Lent): void {
   // ! FACE MUST EXIST AT THIS POINT
@@ -205,66 +175,5 @@ export function handleNewFace(event: NewFace): void {
   user.faces = newFaces;
 
   face.save();
-  user.save();
-}
-// ! --------------------------------------------------------------------------
-
-export function handleApprovalOne(event: ApprovalEvent): void {
-  let approvalParams = event.params;
-  let nftOwner = approvalParams.owner;
-  let approved = approvalParams.approved;
-  let tokenId = approvalParams.tokenId;
-  let nftOwnerHex = nftOwner.toHex();
-
-  // ! check that the event.address is the NFT address (like above)
-  let approvalId = getApprovedOneId(
-    event.address.toHex(),
-    tokenId.toHex(),
-    nftOwnerHex,
-    approved.toHex()
-  );
-  let approval = new ApprovalSchema(approvalId);
-  approval.nftAddress = event.address;
-  approval.owner = nftOwner;
-  approval.approved = approved;
-  approval.tokenId = tokenId;
-
-  // now update the user if exists. If not, create them
-  let user = User.load(nftOwnerHex);
-  if (!user) {
-    user = createUser(nftOwnerHex);
-  }
-  let newApprovals = user.approvals;
-  newApprovals.push(approvalId);
-  user.approvals = newApprovals;
-
-  approval.save();
-  user.save();
-}
-
-export function handleApprovalAll(event: ApprovalForAll): void {
-  let nftOwner = event.params.owner;
-  let approved = event.params.operator;
-  let nftOwnerHex = nftOwner.toHex();
-
-  let approveAllId = getApprovedAllId(
-    event.address.toHex(),
-    nftOwnerHex,
-    approved.toHex()
-  );
-  let approvedAll = new ApprovedAll(approveAllId);
-  approvedAll.nftAddress = event.address;
-  approvedAll.owner = nftOwner;
-  approvedAll.approved = approved;
-
-  let user = User.load(nftOwnerHex);
-  if (user == null) {
-    user = createUser(nftOwnerHex);
-  }
-  let newApprovedAlls = user.approvedAll;
-  newApprovedAlls.push(approveAllId);
-  user.approvedAll = newApprovedAlls;
-
-  approvedAll.save();
   user.save();
 }

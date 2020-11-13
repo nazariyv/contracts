@@ -44,7 +44,7 @@ dataSources:
         - GanFaceFactory
       abis:
         - name: GanFaceFactory
-          file: ./build/contracts/StreamableNFT/GanFaceFactory.json
+          file: ./build/contracts/GanFaceFactory.json
       eventHandlers:
         - event: NewFace(indexed address,indexed uint256,string)
           handler: handleNewFace

@@ -21,6 +21,4 @@ type User @entity {
   lending: [Nft!]
   borrowing: [Nft!]
   faces: [Face!]
-  approvals: [Approval!]
-  approvedAll: [ApprovedAll!]
 }
