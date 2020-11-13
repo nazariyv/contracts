@@ -161,7 +161,10 @@ export function handleReturned(event: Returned): void {
 export function handleNewFace(event: NewFace): void {
   let newFaceParams = event.params;
   // ! ensure that event.address is the address of the NFT
-  let faceId = getFaceId(event.address.toHex(), newFaceParams.tokenId.toHex());
+  let faceId = getFaceId(
+    newFaceParams.nft.toHex(),
+    newFaceParams.tokenId.toHex()
+  );
   let face = new Face(faceId);
   face.uri = newFaceParams.tokenURI;
 

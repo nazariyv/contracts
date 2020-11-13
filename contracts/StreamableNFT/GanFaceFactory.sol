@@ -16,6 +16,7 @@ import "./GanFaceNft.sol";
 contract GanFaceFactory {
   event NewFace(
     address indexed owner,
+    address indexed nft,
     uint256 indexed tokenId,
     string tokenURI
   );
@@ -25,7 +26,7 @@ contract GanFaceFactory {
     returns (address)
   {
     GanFaceNft gan = new GanFaceNft(_owner, _tokenURI);
-    emit NewFace(_owner, 1, _tokenURI);
+    emit NewFace(_owner, address(gan), 1, _tokenURI);
     return address(gan);
   }
 }
