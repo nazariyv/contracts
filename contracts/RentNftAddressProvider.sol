@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.0;
+pragma solidity ^0.7.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./configuration/AddressStorage.sol";
@@ -15,30 +15,11 @@ contract RentNftAddressProvider is Ownable, AddressStorage {
     networkId = _networkId;
   }
 
-  function getDai() public view returns (address) {
-    return getAddress(keccak256(abi.encodePacked("DAI", networkId)));
+  function getToken(bytes8 token) public view returns (address) {
+    return getAddress(keccak256(abi.encodePacked(token, networkId)));
   }
 
-  function getUsdc() public view returns (address) {
-    return getAddress(keccak256(abi.encodePacked("USDC", networkId)));
-  }
-
-  function getUsdt() public view returns (address) {
-    return getAddress(keccak256(abi.encodePacked("USDT", networkId)));
-  }
-
-  function setDai(address _dai) public onlyOwner {
-    _setAddress(keccak256(abi.encodePacked("DAI", networkId)), _dai);
-    emit DaiUpdated(_dai);
-  }
-
-  function setUsdc(address _usdc) public onlyOwner {
-    _setAddress(keccak256(abi.encodePacked("USDC", networkId)), _usdc);
-    emit UsdcUpdated(_usdc);
-  }
-
-  function setUsdt(address _usdt) public onlyOwner {
-    _setAddress(keccak256(abi.encodePacked("USDT", networkId)), _usdt);
-    emit UsdtUpdated(_usdt);
+  function setToken(bytes8 token, address tokenAddress) public onlyOwner {
+    _setAddress(keccak256(abi.encodePacked(token, networkId)), tokenAddress);
   }
 }

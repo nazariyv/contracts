@@ -48,8 +48,4 @@ dataSources:
       eventHandlers:
         - event: NewFace(indexed address,indexed uint256,string)
           handler: handleNewFace
-        - event: Approval(indexed address,indexed address,indexed uint256)
-          handler: handleApprovalOne
-        - event: ApprovalForAll(indexed address,indexed address,bool)
-          handler: handleApprovalAll
       file: ./mapping.ts

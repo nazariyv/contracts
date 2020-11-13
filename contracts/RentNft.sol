@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.0;
+pragma solidity ^0.7.0;
 
 import "./RentNftAddressProvider.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -14,7 +14,6 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
   using SafeERC20 for ERC20;
 
   // TODO: if thre are defaults, mark the address to forbid from renting
-
   event Lent(
     address indexed nftAddress,
     uint256 indexed tokenId,
@@ -52,8 +51,6 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
     uint256 nftPrice; // set by lender. how much lender will receive as collateral if borrower does not return nft in time
   }
 
-  // mapping(address => address) public ownerBorrower;
-  // nft address => token id => nft
   mapping(address => mapping(uint256 => Nft)) public nfts;
 
   RentNftAddressProvider public resolver;
@@ -62,11 +59,6 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
     resolver = RentNftAddressProvider(_resolver);
   }
 
-  /**
-   * @dev See {IERC721Receiver-onERC721Received}.
-   *
-   * Always returns `IERC721Receiver.onERC721Received.selector`.
-   */
   function onERC721Received(
     address,
     address,
@@ -76,7 +68,6 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
     return this.onERC721Received.selector;
   }
 
-  // lend one nft that you own to be borrowable on Rent NFT
   function lendOne(
     address _nftAddress,
     uint256 _tokenId,
@@ -98,6 +89,7 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
     });
 
     // transfer nft to this contract. will fail if nft wasn't approved
+    // this transfers the GanFace but not the TradeableCashflow
     ERC721(_nftAddress).safeTransferFrom(msg.sender, address(this), _tokenId);
     emit Lent(
       _nftAddress,
@@ -109,36 +101,12 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
     );
   }
 
-  // lend multiple nfts that you own to be borrowable by Rent NFT
-  // for gas saving
-  function lendMultiple(
-    address[] calldata _nftAddresses,
-    uint256[] calldata _tokenIds,
-    uint256[] calldata _maxDurations,
-    uint256[] calldata _borrowPrices,
-    uint256[] calldata _nftPrices
-  ) external {
-    require(_nftAddresses.length == _tokenIds.length, "not equal length");
-    require(_tokenIds.length == _maxDurations.length, "not equal length");
-    require(_maxDurations.length == _borrowPrices.length, "not equal length");
-    require(_borrowPrices.length == _nftPrices.length, "not equal length");
-
-    for (uint256 i = 0; i < _nftAddresses.length; i++) {
-      lendOne(
-        _nftAddresses[i],
-        _tokenIds[i],
-        _maxDurations[i],
-        _borrowPrices[i],
-        _nftPrices[i]
-      );
-    }
-  }
-
   function rentOne(
     address _borrower,
     address _nftAddress,
     uint256 _tokenId,
-    uint256 _actualDuration
+    uint256 _actualDuration,
+    bytes8 _token // token in which the rent is paid
   ) public nonReentrant {
     Nft storage nft = nfts[_nftAddress][_tokenId];
 
@@ -146,19 +114,26 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
     require(_borrower != nft.lender, "can't borrow own nft");
     require(_actualDuration <= nft.maxDuration, "Max Duration exceeded");
 
+    // TODO: function here to loop through all of the current borrowers and pick
+    // a receiver for the flow
+
     // ! will fail if wasn't approved
     // pay the NFT owner the rent price
     uint256 rentPrice = _actualDuration.mul(nft.borrowPrice);
-    ERC20(resolver.getDai()).safeTransferFrom(_borrower, nft.lender, rentPrice);
+    ERC20(resolver.getToken(_token)).safeTransferFrom(
+      _borrower,
+      nft.lender,
+      rentPrice
+    );
     // collateral, our contracts acts as an escrow
-    ERC20(resolver.getDai()).safeTransferFrom(
+    ERC20(resolver.getToken(_token)).safeTransferFrom(
       _borrower,
       address(this),
       nft.nftPrice
     );
 
     nfts[_nftAddress][_tokenId].borrower = _borrower;
-    nfts[_nftAddress][_tokenId].borrowedAt = now;
+    nfts[_nftAddress][_tokenId].borrowedAt = block.timestamp;
     nfts[_nftAddress][_tokenId].actualDuration = _actualDuration;
 
     ERC721(_nftAddress).safeTransferFrom(address(this), _borrower, _tokenId);
@@ -175,46 +150,24 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
     );
   }
 
-  function rentMultiple(
-    address _borrower,
-    address[] calldata _nftAddresses,
-    uint256[] calldata _tokenIds,
-    uint256[] calldata _actualDurations
-  ) external {
-    require(_nftAddresses.length == _tokenIds.length, "not equal length");
-    require(_tokenIds.length == _actualDurations.length, "not equal length");
-    for (uint256 i = 0; i < _nftAddresses.length; i++) {
-      rentOne(_borrower, _nftAddresses[i], _tokenIds[i], _actualDurations[i]);
-    }
-  }
-
-  function returnNftOne(address _nftAddress, uint256 _tokenId)
-    public
-    nonReentrant
-  {
+  function returnNftOne(
+    address _nftAddress,
+    uint256 _tokenId,
+    bytes8 _token
+  ) public nonReentrant {
     Nft storage nft = nfts[_nftAddress][_tokenId];
 
     require(nft.borrower == msg.sender, "not borrower");
-    uint256 durationInDays = now.sub(nft.borrowedAt).div(86400);
+    uint256 durationInDays = block.timestamp.sub(nft.borrowedAt).div(86400);
     require(durationInDays <= nft.actualDuration, "duration exceeded");
 
     // we are returning back to the contract so that the owner does not have to add
     // it multiple times thus incurring the transaction costs
     ERC721(_nftAddress).safeTransferFrom(msg.sender, address(this), _tokenId);
-    ERC20(resolver.getDai()).safeTransfer(nft.borrower, nft.nftPrice);
+    ERC20(resolver.getToken(_token)).safeTransfer(nft.borrower, nft.nftPrice);
 
     resetBorrow(nft);
     emit Returned(_nftAddress, _tokenId, msg.sender, nft.lender);
-  }
-
-  function returnNftMultiple(
-    address[] calldata _nftAddresses,
-    uint256[] calldata _tokenIds
-  ) external {
-    require(_nftAddresses.length == _tokenIds.length, "not equal length");
-    for (uint256 i = 0; i < _nftAddresses.length; i++) {
-      returnNftOne(_nftAddresses[i], _tokenIds[i]);
-    }
   }
 
   function stopLending(address _nftAddress, uint256 _tokenId) public {
@@ -225,19 +178,20 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
 
   // TODO: onlyOwner method to be called every day at midnight to automatically
   // default whoever has not returned the NFT in time
-  function claimCollateral(address _nftAddress, uint256 _tokenId)
-    public
-    nonReentrant
-  {
+  function claimCollateral(
+    address _nftAddress,
+    uint256 _tokenId,
+    bytes8 _token
+  ) public nonReentrant {
     Nft storage nft = nfts[_nftAddress][_tokenId];
     require(nft.lender == msg.sender, "not lender");
     require(nft.borrower != address(0), "nft not lent out");
 
-    uint256 durationInDays = now.sub(nft.borrowedAt).div(86400);
+    uint256 durationInDays = block.timestamp.sub(nft.borrowedAt).div(86400);
     require(durationInDays > nft.actualDuration, "duration not exceeded");
 
     resetBorrow(nft);
-    ERC20(resolver.getDai()).safeTransfer(msg.sender, nft.nftPrice);
+    ERC20(resolver.getToken(_token)).safeTransfer(msg.sender, nft.nftPrice);
   }
 
   function resetBorrow(Nft storage nft) internal {
@@ -246,3 +200,53 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
     nft.borrowedAt = 0;
   }
 }
+
+// lend multiple nfts that you own to be borrowable by Rent NFT
+// for gas saving
+// function lendMultiple(
+//   address[] calldata _nftAddresses,
+//   uint256[] calldata _tokenIds,
+//   uint256[] calldata _maxDurations,
+//   uint256[] calldata _borrowPrices,
+//   uint256[] calldata _nftPrices
+// ) external {
+//   require(_nftAddresses.length == _tokenIds.length, "not equal length");
+//   require(_tokenIds.length == _maxDurations.length, "not equal length");
+//   require(_maxDurations.length == _borrowPrices.length, "not equal length");
+//   require(_borrowPrices.length == _nftPrices.length, "not equal length");
+
+//   for (uint256 i = 0; i < _nftAddresses.length; i++) {
+//     lendOne(
+//       _nftAddresses[i],
+//       _tokenIds[i],
+//       _maxDurations[i],
+//       _borrowPrices[i],
+//       _nftPrices[i]
+//     );
+//   }
+// }
+
+// function rentMultiple(
+//   address _borrower,
+//   address[] calldata _nftAddresses,
+//   uint256[] calldata _tokenIds,
+//   uint256[] calldata _actualDurations,
+//   bytes8[] calldata _tokens
+// ) external {
+//   require(_nftAddresses.length == _tokenIds.length, "not equal length");
+//   require(_tokenIds.length == _actualDurations.length, "not equal length");
+//   for (uint256 i = 0; i < _nftAddresses.length; i++) {
+//     rentOne(_borrower, _nftAddresses[i], _tokenIds[i], _actualDurations[i], _tokens[i]);
+//   }
+// }
+
+// function returnNftMultiple(
+//   address[] calldata _nftAddresses,
+//   uint256[] calldata _tokenIds,
+//   bytes8[] calldata _token
+// ) external {
+//   require(_nftAddresses.length == _tokenIds.length, "not equal length");
+//   for (uint256 i = 0; i < _nftAddresses.length; i++) {
+//     returnNftOne(_nftAddresses[i], _tokenIds[i], _token[i]);
+//   }
+// }

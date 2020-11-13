@@ -45,7 +45,8 @@ module.exports = {
       host: "127.0.0.1", // Localhost (default: none)
       port: 7545, // Standard Ethereum port (default: none)
       network_id: "*", // Any network (default: none)
-      mnemonic: "spoon mouse pupil sail verify message seat cross setup stumble park dentist"
+      mnemonic:
+        "spoon mouse pupil sail verify message seat cross setup stumble park dentist"
     },
     // Another network with more advanced options...
     advanced: {
@@ -85,12 +86,12 @@ module.exports = {
     goerli: {
       provider: () =>
         new HDWalletProvider(
-          mnemonic,
+          "spoon mouse pupil sail verify message seat cross setup stumble park dentist",
           `https://goerli.infura.io/v3/${infuraKey}`
         ),
       network_id: 5, // Ropsten's id
       gas: 5500000, // Ropsten has a lower block limit than mainnet
-      confirmations: 2, // # of confs to wait between deployments. (default: 0)
+      confirmations: 1, // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true // Skip dry run before migrations? (default: false for public nets )
     },
@@ -110,7 +111,7 @@ module.exports = {
   // Configure your compilers
   compilers: {
     solc: {
-      version: "0.6.12" // Fetch exact version from solc-bin (default: truffle's version)
+      version: "0.7.1" // Fetch exact version from solc-bin (default: truffle's version)
       // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
       // settings: {          // See the solidity docs for advice about optimization and evmVersion
       //  optimizer: {

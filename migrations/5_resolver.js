@@ -1,5 +1,5 @@
 const RentNftAddressProvider = artifacts.require("RentNftAddressProvider");
-const PaymentToken = artifacts.require("PaymentToken");
+const { initSf } = require("./_utils");
 
 module.exports = async (_deployer, _network) => {
   if (_network === "development" || _network === "goerli") {
@@ -7,7 +7,15 @@ module.exports = async (_deployer, _network) => {
     await _deployer.deploy(RentNftAddressProvider, networkId);
     const resolver = await RentNftAddressProvider.deployed();
 
-    const token = await PaymentToken.deployed();
-    await resolver.setDai(token.address);
+    // TODO. make this deployment context global to persistent in the next script
+    // and avoid re-initializing
+    const sf = await initSf();
+
+    const daiAddress = await sf.resolver.get("tokens.fDAI");
+    const dai = await sf.contracts.TestToken.at(daiAddress);
+    const daixWrapper = await sf.getERC20Wrapper(dai);
+    const daix = await sf.contracts.ISuperToken.at(daixWrapper.wrapperAddress);
+
+    resolver.setToken("DAI", daix.address);
   }
 };
