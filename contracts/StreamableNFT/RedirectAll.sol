@@ -39,10 +39,11 @@ contract RedirectAll is SuperAppBase {
     superToken = _superToken;
     receiver = _receiver;
 
-    uint256 configWord = SuperAppDefinitions.TYPE_APP_FINAL |
-      SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP |
-      SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP |
-      SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
+    uint256 configWord =
+      SuperAppDefinitions.TYPE_APP_FINAL |
+        SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP |
+        SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP |
+        SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
 
     host.registerApp(configWord);
   }
@@ -56,64 +57,61 @@ contract RedirectAll is SuperAppBase {
       int96
     )
   {
-    (uint256 startTime, int96 flowRate, , ) = cfa.getFlow(
-      superToken,
-      address(this),
-      receiver
-    );
+    (uint256 startTime, int96 flowRate, , ) =
+      cfa.getFlow(superToken, address(this), receiver);
     return (startTime, receiver, flowRate);
   }
 
   function _updateOutflow(bytes calldata _ctx) private returns (bytes memory) {
     int96 netFlowRate = cfa.getNetFlow(superToken, address(this));
-    (, int96 outFlowRate, , ) = cfa.getFlow(
-      superToken,
-      address(this),
-      receiver
-    );
+    (, int96 outFlowRate, , ) =
+      cfa.getFlow(superToken, address(this), receiver);
     // TODO: potential underflow / overflow. 0.8.0 built in safety mechanism. use SafeMath
     // or reverts
     int96 inFlowRate = netFlowRate + outFlowRate;
 
     // we update the existing flow here. This in turn will re-direct to the receiver
     if (outFlowRate != int96(0)) {
-      (bytes memory newCtx, ) = host.callAgreementWithContext(
-        cfa,
-        abi.encodeWithSelector(
-          cfa.updateFlow.selector,
-          superToken,
-          receiver,
-          inFlowRate,
-          new bytes(0)
-        ),
-        _ctx
-      );
+      (bytes memory newCtx, ) =
+        host.callAgreementWithContext(
+          cfa,
+          abi.encodeWithSelector(
+            cfa.updateFlow.selector,
+            superToken,
+            receiver,
+            inFlowRate,
+            new bytes(0)
+          ),
+          _ctx
+        );
       return newCtx;
     } else if (inFlowRate == int96(0)) {
-      (bytes memory newCtx, ) = host.callAgreementWithContext(
-        cfa,
-        abi.encodeWithSelector(
-          cfa.deleteFlow.selector,
-          superToken,
-          address(this),
-          receiver,
-          new bytes(0)
-        ),
-        _ctx
-      );
+      (bytes memory newCtx, ) =
+        host.callAgreementWithContext(
+          cfa,
+          abi.encodeWithSelector(
+            cfa.deleteFlow.selector,
+            superToken,
+            address(this),
+            receiver,
+            new bytes(0)
+          ),
+          _ctx
+        );
       return newCtx;
     } else {
-      (bytes memory newCtx, ) = host.callAgreementWithContext(
-        cfa,
-        abi.encodeWithSelector(
-          cfa.createFlow.selector,
-          superToken,
-          receiver,
-          inFlowRate,
-          new bytes(0)
-        ),
-        _ctx
-      );
+      (bytes memory newCtx, ) =
+        host.callAgreementWithContext(
+          cfa,
+          abi.encodeWithSelector(
+            cfa.createFlow.selector,
+            superToken,
+            receiver,
+            inFlowRate,
+            new bytes(0)
+          ),
+          _ctx
+        );
       return newCtx;
     }
   }

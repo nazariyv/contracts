@@ -8,16 +8,16 @@ dataSources:
     name: RentNft
     network: goerli
     source:
-      address: "0x75CECD8f03BFC6E2899d155d5732638cE97E221c"
+      address: "0xaB83F267ad4681D92A16198cbf303D3350d0F207"
       abi: RentNft
-      startBlock: 3731139
+      startBlock: 3746526
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
         - RentNft
-        - GanFaceNft
+        - GanFaceFactory
       abis:
         - name: RentNft
           file: ./build/contracts/RentNft.json
@@ -30,21 +30,21 @@ dataSources:
           handler: handleReturned
       file: ./mapping.ts
   - kind: ethereum/contract
-    name: GanFaceNft
+    name: GanFaceFactory
     network: goerli
     source:
-      address: "0x19f911B243dc1F371Ed34eaB1E24a4545Fa704Ea"
-      abi: GanFaceNft
-      startBlock: 3731125
+      address: "0xEA9C79fd730A4bb3853c5BF9963dF65F1d5b7605"
+      abi: GanFaceFactory
+      startBlock: 3746518
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - GanFaceNft
+        - GanFaceFactory
       abis:
-        - name: GanFaceNft
-          file: ./build/contracts/GanFaceNft.json
+        - name: GanFaceFactory
+          file: ./build/contracts/StreamableNFT/GanFaceFactory.json
       eventHandlers:
         - event: NewFace(indexed address,indexed uint256,string)
           handler: handleNewFace

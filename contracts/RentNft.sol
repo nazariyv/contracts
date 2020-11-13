@@ -52,10 +52,11 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
   }
 
   mapping(address => mapping(uint256 => Nft)) public nfts;
+  mapping(address => address[]) public lenderCashflows;
 
   RentNftAddressProvider public resolver;
 
-  constructor(address _resolver) public {
+  constructor(address _resolver) {
     resolver = RentNftAddressProvider(_resolver);
   }
 
@@ -68,12 +69,14 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
     return this.onERC721Received.selector;
   }
 
+  // todo: limitation: cashflow addreses are only appended, they are never removed
   function lendOne(
     address _nftAddress,
     uint256 _tokenId,
     uint256 _maxDuration,
     uint256 _borrowPrice,
-    uint256 _nftPrice
+    uint256 _nftPrice,
+    address _cashflowAddress
   ) public nonReentrant {
     require(_nftAddress != address(0), "invalid NFT address");
     require(_maxDuration > 0, "at least one day");
@@ -91,6 +94,8 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
     // transfer nft to this contract. will fail if nft wasn't approved
     // this transfers the GanFace but not the TradeableCashflow
     ERC721(_nftAddress).safeTransferFrom(msg.sender, address(this), _tokenId);
+    lenderCashflows[msg.sender].push(_cashflowAddress);
+
     emit Lent(
       _nftAddress,
       _tokenId,
@@ -119,12 +124,13 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
 
     // ! will fail if wasn't approved
     // pay the NFT owner the rent price
-    uint256 rentPrice = _actualDuration.mul(nft.borrowPrice);
-    ERC20(resolver.getToken(_token)).safeTransferFrom(
-      _borrower,
-      nft.lender,
-      rentPrice
-    );
+    // * the borrow amounts are not paid into the streemable NFT
+    // uint256 rentPrice = _actualDuration.mul(nft.borrowPrice);
+    // ERC20(resolver.getToken(_token)).safeTransferFrom(
+    //   _borrower,
+    //   nft.lender,
+    //   rentPrice
+    // );
     // collateral, our contracts acts as an escrow
     ERC20(resolver.getToken(_token)).safeTransferFrom(
       _borrower,

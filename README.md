@@ -20,8 +20,12 @@ Borrowing an NFT implies transferring the NFT to the borrower, collecting the co
 
 Happy Face Renting!
 
-## Limitations
+## Limitations - This is an MVP
 
 1. Nothing stops the borrower from simply stopping the stream right now. This can be solved by automatically claiming the lender's collateral for them.
-2. Borrower can default. Once again, claim their collateral
-3. Unless the borrower closes the stream, it will continue. This can be mitigated with kron jobs or OpenzeppelinDefender (testnets)
+2. Borrower can default. Once again, claim their collateral.
+3. Unless the borrower closes the stream, it will continue. This can be mitigated with kron jobs or OpenzeppelinDefender (testnets).
+4. Tests are outdated.
+5. This is an MVP. One cashflow per NFT holder.
+6. NFT contracts re-deployed (instead of incrementing tokenID) - expensive.
+7. I have to deploy tradeable cashflow contract from the client, since factory is hitting gas limit

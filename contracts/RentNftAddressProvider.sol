@@ -5,13 +5,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./configuration/AddressStorage.sol";
 
 contract RentNftAddressProvider is Ownable, AddressStorage {
-  event DaiUpdated(address indexed newAddress);
-  event UsdcUpdated(address indexed newAddress);
-  event UsdtUpdated(address indexed newAddress);
-
   uint8 private networkId;
 
-  constructor(uint8 _networkId) public {
+  constructor(uint8 _networkId) {
     networkId = _networkId;
   }
 

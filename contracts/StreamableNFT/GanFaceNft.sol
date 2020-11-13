@@ -8,19 +8,14 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 contract GanFaceNft is ERC721, ReentrancyGuard {
   using Counters for Counters.Counter;
   Counters.Counter private __tokenIds;
-  address[] public streams;
   address public currentOwner;
 
-  event NewFace(
-    address indexed owner,
-    uint256 indexed tokenId,
-    string tokenURI
-  );
-
-  constructor() public ERC721("GANFACE", "GF") {}
+  constructor(address _owner, string memory _tokenURI) ERC721("GANFACE", "GF") {
+    awardGanFace(_owner, _tokenURI);
+  }
 
   function awardGanFace(address _minter, string memory _tokenURI)
-    public
+    internal
     nonReentrant
     returns (uint256)
   {
@@ -31,21 +26,8 @@ contract GanFaceNft is ERC721, ReentrancyGuard {
     _setTokenURI(newItemId, _tokenURI);
 
     currentOwner = _minter;
-    emit NewFace(_minter, newItemId, _tokenURI);
 
     return newItemId;
-  }
-
-  // on lend, this gets called to update the list of associated
-  // contract streams
-  // on return, a 0 address is passed to pop from the stack
-  // todo: very simplistic and can be gamed
-  function updateStreams(address newAddress) internal onlyOwner {
-    if (newAddress == address(0)) {
-      delete streams[streams.length - 1];
-    } else {
-      streams.push(newAddress);
-    }
   }
 
   modifier onlyOwner() {

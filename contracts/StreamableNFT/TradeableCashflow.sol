@@ -1,4 +1,3 @@
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.0;
 
@@ -6,25 +5,32 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./RedirectAll.sol";
 
 contract TradeableCashflow is ERC721, RedirectAll {
-
   event NewFace(
     address indexed owner,
     uint256 indexed tokenId,
     string tokenURI
   );
 
+  // uint private once = 0;
+  // address owner;
+
   constructor(
-    address owner,
+    address _owner,
     string memory _name,
     string memory _symbol,
-    ISuperfluid host,
-    IConstantFlowAgreementV1 cfa,
-    ISuperToken acceptedToken
-  )
-    public
-    ERC721("TradeableCashflow", "SFC")
-    RedirectAll(host, cfa, acceptedToken, owner)
-  {}
+    ISuperfluid _host,
+    IConstantFlowAgreementV1 _cfa,
+    ISuperToken _acceptedToken
+  ) ERC721(_name, _symbol) RedirectAll(_host, _cfa, _acceptedToken, _owner) {
+    // owner = _owner;
+    _mint(_owner, 1);
+  }
+
+  // ! TODO: hack. The factory wouldn't deploy. I suspect it is due to the gas block limit
+  // function mint() external {
+  //   require(once == 0, "not allowed");
+  //   _mint(owner, 1);
+  // }
 
   // before mint, burn, transfer, this gets called
   // i.e. the receiver of the stream changes
