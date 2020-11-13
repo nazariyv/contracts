@@ -106,7 +106,7 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
     address _nftAddress,
     uint256 _tokenId,
     uint256 _actualDuration,
-    bytes8 _token // token in which the rent is paid
+    bytes calldata _token // token in which the rent is paid
   ) public nonReentrant {
     Nft storage nft = nfts[_nftAddress][_tokenId];
 
@@ -153,7 +153,7 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
   function returnNftOne(
     address _nftAddress,
     uint256 _tokenId,
-    bytes8 _token
+    bytes calldata _token
   ) public nonReentrant {
     Nft storage nft = nfts[_nftAddress][_tokenId];
 
@@ -181,7 +181,7 @@ contract RentNft is ReentrancyGuard, Ownable, ERC721Holder {
   function claimCollateral(
     address _nftAddress,
     uint256 _tokenId,
-    bytes8 _token
+    bytes calldata _token
   ) public nonReentrant {
     Nft storage nft = nfts[_nftAddress][_tokenId];
     require(nft.lender == msg.sender, "not lender");

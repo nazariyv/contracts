@@ -15,11 +15,14 @@ contract RentNftAddressProvider is Ownable, AddressStorage {
     networkId = _networkId;
   }
 
-  function getToken(bytes8 token) public view returns (address) {
+  function getToken(bytes calldata token) public view returns (address) {
     return getAddress(keccak256(abi.encodePacked(token, networkId)));
   }
 
-  function setToken(bytes8 token, address tokenAddress) public onlyOwner {
+  function setToken(bytes calldata token, address tokenAddress)
+    public
+    onlyOwner
+  {
     _setAddress(keccak256(abi.encodePacked(token, networkId)), tokenAddress);
   }
 }

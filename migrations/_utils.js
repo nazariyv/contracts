@@ -13,7 +13,7 @@ const getNetwork = (network) => {
 
 const K = "1000";
 
-const initSf = async () => {
+const initSf = async (network, web3) => {
   const version = "0.1.2-preview-20201014";
   const sf = new SuperfluidSDK.Framework({
     chainId: getNetwork(network),
